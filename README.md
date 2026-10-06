@@ -4,7 +4,8 @@ Quiz d'histoire multijoueur en temps réel, de la Première Guerre mondiale à l
 
 - **Solo** : une partie rapide, à ton rythme.
 - **Salon** : crée un salon, partage le code (ou le lien), et jouez en même temps. Les réponses rapides rapportent plus de points.
-- Interface pensée pour le **mobile** (gros boutons tactiles, mode sombre automatique, reconnexion automatique).
+- Interface pensée pour le **mobile** : gros boutons tactiles, thème clair/sombre (suit le téléphone, bouton pour changer), reconnexion automatique.
+- Une couleur par période, séries de bonnes réponses, évolution du classement à chaque question et podium final.
 
 ## Stack
 

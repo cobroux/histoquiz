@@ -1,75 +1,195 @@
 <main class="page">
-  <header class="hero">
-    <p class="eyebrow">1914 — 1991</p>
-    <h1>HistoQuiz</h1>
-    <p class="muted">
-      De Sarajevo à la chute de l'URSS : teste tes connaissances seul ou entre amis.
-    </p>
-  </header>
+  <svg class="deco sun" width="120" height="120" viewBox="0 0 120 120" aria-hidden="true">
+    <circle cx="60" cy="60" r="60" fill="var(--yellow)" />
+  </svg>
+  <svg class="deco star" width="44" height="44" viewBox="0 0 44 44" aria-hidden="true">
+    <path
+      d="M22 2l5.6 13.4L42 17l-11 9.6 3.4 14.4L22 33.4 9.6 41l3.4-14.4L2 17l14.4-1.6z"
+      fill="var(--pink)"
+    />
+  </svg>
+  <svg class="deco dot" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+    <circle cx="13" cy="13" r="11" fill="var(--mint)" />
+  </svg>
 
-  <div class="tabs" role="tablist" aria-label="Mode de jeu">
-    <button role="tab" [attr.aria-selected]="mode() === 'solo'" (click)="setMode('solo')">
-      Solo
-    </button>
-    <button role="tab" [attr.aria-selected]="mode() === 'create'" (click)="setMode('create')">
-      Créer un salon
-    </button>
-    <button role="tab" [attr.aria-selected]="mode() === 'join'" (click)="setMode('join')">
-      Rejoindre
-    </button>
-  </div>
+  @if (mode() === null) {
+    <header class="hero">
+      <span class="sticker">1914 → 1991</span>
+      <h1>Histo<span class="accent">Quiz</span></h1>
+      <p>
+        Des tranchées au mur de Berlin&#160;: défie tes potes sur le siècle le plus fou de
+        l'histoire.
+      </p>
+    </header>
 
-  <form class="card form" (ngSubmit)="submit()">
-    <div>
-      <label class="label" for="name">Ton pseudo</label>
+    <div class="field">
+      <label class="label" for="name">Comment on t'appelle&#160;?</label>
       <input
+        #nameInput
         id="name"
         class="input"
         name="name"
         maxlength="20"
         autocomplete="nickname"
-        placeholder="Ex. Clemenceau"
+        placeholder="Ton pseudo"
         [ngModel]="name()"
-        (ngModelChange)="name.set($event)"
+        (ngModelChange)="name.set($event); error.set(null)"
       />
     </div>
 
-    @if (mode() === 'join') {
-      <div>
-        <label class="label" for="code">Code du salon</label>
-        <input
-          id="code"
-          class="input code-input"
-          name="code"
-          inputmode="text"
-          autocapitalize="characters"
-          autocomplete="off"
-          placeholder="ABCDE"
-          [ngModel]="code()"
-          (ngModelChange)="onCodeInput($event)"
-        />
-      </div>
-    } @else {
-      <div>
-        <span class="label">Périodes <span class="hint">(aucune = toutes)</span></span>
-        <div class="periods">
-          @for (p of periods(); track p.id) {
-            <button
-              type="button"
-              class="period"
-              [attr.aria-pressed]="selected().has(p.id)"
-              (click)="togglePeriod(p.id)"
-            >
-              <strong>{{ p.label }}</strong>
-              <span>{{ p.years }}</span>
-            </button>
-          }
-        </div>
-      </div>
+    @if (error(); as message) {
+      <p class="error" role="alert">{{ message }}</p>
+    }
 
-      <div class="row">
-        <div>
-          <span class="label">Questions</span>
+    <nav class="modes" aria-label="Mode de jeu">
+      <button type="button" class="mode solo" (click)="choose('solo')">
+        <span class="mode-icon">
+          <svg
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" />
+          </svg>
+        </span>
+        <span class="mode-text"
+          ><strong>Jouer en solo</strong><span>À ton rythme, sans pression</span></span
+        >
+      </button>
+      <button type="button" class="mode create" (click)="choose('create')">
+        <span class="mode-icon">
+          <svg
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="9" cy="8" r="3.5" />
+            <circle cx="17" cy="9" r="2.5" />
+            <path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M15.5 14.2c3 .1 5.5 2.2 5.5 5.3" />
+          </svg>
+        </span>
+        <span class="mode-text"
+          ><strong>Créer un salon</strong><span>Partage le code à tes amis</span></span
+        >
+      </button>
+      <button type="button" class="mode join" (click)="choose('join')">
+        <span class="mode-icon">
+          <svg
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M10 17l5-5-5-5M15 12H3M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5" />
+          </svg>
+        </span>
+        <span class="mode-text"
+          ><strong>J'ai un code</strong><span>Rejoins une partie en cours</span></span
+        >
+      </button>
+    </nav>
+
+    <footer class="footer">
+      <span class="muted">
+        @if (totalQuestions()) {
+          {{ totalQuestions() }} questions · 4 périodes
+        }
+      </span>
+      <app-theme-toggle />
+    </footer>
+  } @else {
+    <header class="step-header">
+      <button type="button" class="icon-btn" aria-label="Retour" (click)="back()">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M15 5l-7 7 7 7" />
+        </svg>
+      </button>
+      <h2>
+        @switch (mode()) {
+          @case ('solo') {
+            Partie solo
+          }
+          @case ('create') {
+            Nouveau salon
+          }
+          @case ('join') {
+            Rejoindre
+          }
+        }
+      </h2>
+      <app-theme-toggle />
+    </header>
+
+    <form class="step pop-in" (ngSubmit)="submit()">
+      @if (mode() === 'join') {
+        <div class="card">
+          <label class="label" for="code">Code du salon</label>
+          <input
+            id="code"
+            class="input code-input"
+            name="code"
+            autocapitalize="characters"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="ABCDE"
+            [ngModel]="code()"
+            (ngModelChange)="onCodeInput($event)"
+          />
+          <p class="hint muted">Demande le code à la personne qui a créé le salon.</p>
+        </div>
+      } @else {
+        <section>
+          <span class="label">Quelles périodes&#160;?</span>
+          <div class="periods">
+            @for (p of periods(); track p.id) {
+              <button
+                type="button"
+                class="period"
+                [class.on]="isSelected(p.id)"
+                [style.--period]="periodColors[p.id]"
+                [attr.aria-pressed]="selected().has(p.id)"
+                (click)="togglePeriod(p.id)"
+              >
+                <span class="period-years">{{ periodShort[p.id] }}</span>
+                <span class="period-label">{{ p.label }}</span>
+              </button>
+            }
+          </div>
+          <p class="hint muted">
+            @if (selected().size === 0) {
+              Aucune sélection&#160;: on mélange tout&#160;!
+            } @else {
+              {{ available() }} questions disponibles
+            }
+          </p>
+        </section>
+
+        <section>
+          <span class="label">Combien de questions&#160;?</span>
           <div class="chip-row">
             @for (n of questionCounts; track n) {
               <button
@@ -83,9 +203,10 @@
               </button>
             }
           </div>
-        </div>
-        <div>
-          <span class="label">Temps par question</span>
+        </section>
+
+        <section>
+          <span class="label">Temps pour répondre</span>
           <div class="chip-row">
             @for (s of durations; track s) {
               <button
@@ -98,26 +219,34 @@
               </button>
             }
           </div>
-        </div>
-      </div>
-    }
-
-    @if (error(); as message) {
-      <p class="error" role="alert">{{ message }}</p>
-    }
-
-    <button class="btn primary block" type="submit" [disabled]="!canSubmit()">
-      @switch (mode()) {
-        @case ('solo') {
-          Lancer la partie
-        }
-        @case ('create') {
-          Créer le salon
-        }
-        @case ('join') {
-          Rejoindre
-        }
+        </section>
       }
-    </button>
-  </form>
+
+      @if (error(); as message) {
+        <p class="error" role="alert">{{ message }}</p>
+      }
+
+      <div class="actions">
+        <button
+          class="btn block"
+          [class.primary]="mode() !== 'create'"
+          [class.yellow]="mode() === 'create'"
+          type="submit"
+          [disabled]="!canSubmit()"
+        >
+          @switch (mode()) {
+            @case ('solo') {
+              C'est parti&#160;!
+            }
+            @case ('create') {
+              Créer le salon
+            }
+            @case ('join') {
+              Rejoindre la partie
+            }
+          }
+        </button>
+      </div>
+    </form>
+  }
 </main>

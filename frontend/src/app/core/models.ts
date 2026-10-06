@@ -28,6 +28,8 @@ export interface PlayerView {
   name: string;
   score: number;
   correctCount: number;
+  streak: number;
+  bestStreak: number;
   connected: boolean;
   answered: boolean;
   lastPoints: number | null;

@@ -1,285 +1,560 @@
-<main class="page">
-  @switch (status()) {
-    @case ('loading') {
-      <p class="center muted">Chargement du salon…</p>
-    }
+<div
+  class="screen"
+  [class.good]="room()?.phase === 'REVEAL' && outcome() === 'correct'"
+  [class.bad]="room()?.phase === 'REVEAL' && outcome() !== 'correct'"
+  [class.finished]="room()?.phase === 'FINISHED'"
+>
+  <main class="page">
+    @switch (status()) {
+      @case ('loading') {
+        <p class="center muted">Chargement du salon…</p>
+      }
 
-    @case ('error') {
-      <div class="card center-card">
-        <h2>Oups</h2>
-        <p class="muted">{{ error() }}</p>
-        <a class="btn primary block" routerLink="/">Retour à l'accueil</a>
-      </div>
-    }
+      @case ('error') {
+        <div class="card center-card pop-in">
+          <h2>Oups&#160;!</h2>
+          <p class="muted">{{ error() }}</p>
+          <a class="btn primary block" routerLink="/">Retour à l'accueil</a>
+        </div>
+      }
 
-    @case ('join') {
-      <form class="card center-card" (ngSubmit)="join()">
-        <p class="eyebrow">Salon {{ code().toUpperCase() }}</p>
-        <h2>Rejoindre la partie</h2>
-        <label class="label" for="name">Ton pseudo</label>
-        <input
-          id="name"
-          class="input"
-          name="name"
-          maxlength="20"
-          autocomplete="nickname"
-          [ngModel]="name()"
-          (ngModelChange)="name.set($event)"
-        />
-        @if (error(); as message) {
-          <p class="error" role="alert">{{ message }}</p>
-        }
-        <button class="btn primary block" type="submit" [disabled]="busy() || !name().trim()">
-          Rejoindre
-        </button>
-        <a class="btn block" routerLink="/">Annuler</a>
-      </form>
-    }
-
-    @case ('playing') {
-      @if (room(); as r) {
-        <header class="topbar">
-          <button class="icon-btn" type="button" (click)="leave()" aria-label="Quitter la partie">
-            ✕
-          </button>
-          <div class="topbar-title">
-            @if (r.phase === 'QUESTION' || r.phase === 'REVEAL') {
-              Question {{ r.questionIndex + 1 }}/{{ r.questionCount }}
-            } @else if (r.solo) {
-              Partie solo
-            } @else {
-              Salon {{ r.code }}
-            }
+      @case ('join') {
+        <form class="center-card pop-in" (ngSubmit)="join()">
+          <span class="sticker">Salon {{ code().toUpperCase() }}</span>
+          <h2 class="join-title">On t'attend&#160;!</h2>
+          <div>
+            <label class="label" for="name">Comment on t'appelle&#160;?</label>
+            <input
+              id="name"
+              class="input"
+              name="name"
+              maxlength="20"
+              autocomplete="nickname"
+              placeholder="Ton pseudo"
+              [ngModel]="name()"
+              (ngModelChange)="name.set($event)"
+            />
           </div>
-          @if (me(); as m) {
-            <div class="score-pill" aria-label="Ton score">{{ m.score }} pts</div>
+          @if (error(); as message) {
+            <p class="error" role="alert">{{ message }}</p>
           }
-        </header>
+          <button class="btn primary block" type="submit" [disabled]="busy() || !name().trim()">
+            Rejoindre la partie
+          </button>
+          <a class="btn ghost block" routerLink="/">Annuler</a>
+        </form>
+      }
 
-        @if (!online()) {
-          <p class="banner" role="status">Connexion perdue, reconnexion…</p>
-        }
-
-        <!-- ───────────── Lobby ───────────── -->
-        @if (r.phase === 'LOBBY') {
-          @if (r.solo) {
-            <p class="center muted">La partie démarre…</p>
-          } @else {
-            <section class="card share">
-              <span class="label">Code du salon</span>
-              <div class="big-code">{{ r.code }}</div>
-              <button class="btn block" type="button" (click)="share()">
-                {{ shareFeedback() ?? 'Partager le lien' }}
-              </button>
-            </section>
-
-            <section class="card">
-              <h3 class="section-title">Joueurs ({{ r.players.length }})</h3>
-              <ul class="players">
-                @for (p of r.players; track p.id) {
-                  <li [class.offline]="!p.connected">
-                    <span class="avatar">{{ initials(p.name) }}</span>
-                    <span class="player-name">{{ p.name }}</span>
-                    @if (p.id === r.hostId) {
-                      <span class="tag">Hôte</span>
-                    }
-                    @if (p.id === me()?.id) {
-                      <span class="tag soft">Toi</span>
-                    }
-                  </li>
+      @case ('playing') {
+        @if (room(); as r) {
+          <!-- ───────────── Top bar ───────────── -->
+          <header class="topbar">
+            <button class="icon-btn" type="button" (click)="leave()" aria-label="Quitter la partie">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.6"
+                stroke-linecap="round"
+              >
+                <path d="M3 3l10 10M13 3L3 13" />
+              </svg>
+            </button>
+            @if (r.phase === 'QUESTION' || r.phase === 'REVEAL') {
+              <ol
+                class="progress"
+                [attr.aria-label]="'Question ' + (r.questionIndex + 1) + ' sur ' + r.questionCount"
+              >
+                @for (step of progress(); track $index) {
+                  <li [class]="step"></li>
                 }
-              </ul>
-            </section>
+              </ol>
+            } @else {
+              <div class="topbar-title">{{ r.solo ? 'Partie solo' : 'Salon ' + r.code }}</div>
+            }
+            @if (r.phase === 'LOBBY' || r.phase === 'FINISHED') {
+              <app-theme-toggle />
+            } @else if (me(); as m) {
+              <div class="score-pill" aria-label="Ton score">
+                <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M12 2l2.9 6.6 7.1.7-5.4 4.8 1.6 7L12 17.3 5.8 21l1.6-7L2 9.3l7.1-.7z"
+                    fill="var(--yellow)"
+                  />
+                </svg>
+                {{ points(m.score) }}
+              </div>
+            }
+          </header>
 
-            <p class="muted small center">
-              {{ r.settings.questionCount }} questions · {{ r.settings.secondsPerQuestion }} s par
-              question
-            </p>
-
-            <div class="sticky-actions">
-              @if (isHost()) {
-                <button class="btn primary block" type="button" (click)="start()">
-                  Lancer la partie
-                </button>
-              } @else {
-                <p class="center muted">En attente du lancement par l'hôte…</p>
-              }
-            </div>
+          @if (!online()) {
+            <p class="banner" role="status">Connexion perdue, on se reconnecte…</p>
           }
 
-          <!-- ───────────── Question & reveal ───────────── -->
-        } @else if (r.phase === 'QUESTION' || r.phase === 'REVEAL') {
-          @if (r.question; as q) {
-            <div class="timer" [class.hidden]="r.phase !== 'QUESTION'" aria-hidden="true">
-              <div
-                class="timer-fill"
-                [class.low]="remainingMs() < 5000"
-                [style.transform]="'scaleX(' + remainingRatio() + ')'"
-              ></div>
-            </div>
+          <!-- ───────────── Lobby ───────────── -->
+          @if (r.phase === 'LOBBY') {
+            @if (r.solo) {
+              <p class="center muted">La partie démarre…</p>
+            } @else {
+              <section class="code-card pop-in">
+                <span class="code-label">Code du salon</span>
+                <div class="big-code">{{ r.code }}</div>
+                <button class="btn dark block" type="button" (click)="share()">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.4"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v13" />
+                  </svg>
+                  {{ shareFeedback() ?? 'Inviter des amis' }}
+                </button>
+              </section>
 
-            <section class="question">
-              <p class="eyebrow">{{ q.periodLabel }}</p>
-              <h2>{{ q.text }}</h2>
-              @if (r.phase === 'QUESTION') {
-                <p class="muted small">
-                  {{ (remainingMs() / 1000).toFixed(0) }} s
-                  @if (!r.solo) {
-                    · {{ answeredCount() }}/{{ connectedCount() }} ont répondu
+              <section class="card">
+                <h3 class="section-title">
+                  Joueurs <span class="count-pill">{{ r.players.length }}</span>
+                </h3>
+                <ul class="players">
+                  @for (p of r.players; track p.id) {
+                    <li class="pop-in" [class.offline]="!p.connected">
+                      <span class="avatar" [style.background]="avatarColor(p.name)">{{
+                        initial(p.name)
+                      }}</span>
+                      <span class="player-name">{{ p.name }}</span>
+                      @if (p.id === r.hostId) {
+                        <span class="tag">Hôte</span>
+                      }
+                      @if (p.id === me()?.id) {
+                        <span class="tag soft">Toi</span>
+                      }
+                    </li>
                   }
+                </ul>
+              </section>
+
+              <p class="center muted small">
+                {{ r.settings.questionCount }} questions · {{ r.settings.secondsPerQuestion }} s
+                pour répondre
+              </p>
+
+              <div class="sticky-actions">
+                @if (isHost()) {
+                  <button class="btn primary block" type="button" (click)="start()">
+                    Lancer la partie
+                  </button>
+                } @else {
+                  <p class="waiting">En attente du lancement par l'hôte…</p>
+                }
+              </div>
+            }
+          } @else if (r.phase === 'QUESTION' || r.phase === 'REVEAL') {
+            <!-- ───────────── Question & reveal ───────────── -->
+            @if (r.question; as q) {
+              @if (r.phase === 'REVEAL') {
+                <section class="verdict pop-in">
+                  <div class="verdict-icon">
+                    @if (outcome() === 'correct') {
+                      <svg
+                        width="40"
+                        height="40"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="3"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path d="M5 12.5l4.5 4.5L19 7.5" />
+                      </svg>
+                    } @else if (outcome() === 'wrong') {
+                      <svg
+                        width="36"
+                        height="36"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="3"
+                        stroke-linecap="round"
+                      >
+                        <path d="M6 6l12 12M18 6L6 18" />
+                      </svg>
+                    } @else {
+                      <svg
+                        width="38"
+                        height="38"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.6"
+                        stroke-linecap="round"
+                      >
+                        <circle cx="12" cy="13" r="8" />
+                        <path d="M12 9v4l2.5 2M9 2h6" />
+                      </svg>
+                    }
+                  </div>
+                  <h2>
+                    @switch (outcome()) {
+                      @case ('correct') {
+                        Bien joué&#160;!
+                      }
+                      @case ('wrong') {
+                        Raté&#160;!
+                      }
+                      @case ('missed') {
+                        Trop tard&#160;!
+                      }
+                    }
+                  </h2>
+                  <div class="verdict-badges">
+                    @if (me()?.lastPoints) {
+                      <span class="points-badge">+{{ points(me()!.lastPoints!) }}</span>
+                    }
+                    @if ((me()?.streak ?? 0) >= 2) {
+                      <span class="streak-badge">Série de {{ me()?.streak }}</span>
+                    }
+                  </div>
+                </section>
+              } @else {
+                <section class="question-card pop-in" [style.--period]="periodColor()">
+                  <svg
+                    class="question-deco"
+                    width="140"
+                    height="140"
+                    viewBox="0 0 140 140"
+                    aria-hidden="true"
+                  >
+                    <circle
+                      cx="70"
+                      cy="70"
+                      r="66"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="10"
+                    />
+                    <circle
+                      cx="70"
+                      cy="70"
+                      r="36"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="10"
+                    />
+                  </svg>
+                  <div class="question-meta">
+                    <span class="period-tag">{{ q.periodLabel }}</span>
+                    <span class="timer-label" [class.low]="remainingMs() < 5000">
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.6"
+                        stroke-linecap="round"
+                      >
+                        <circle cx="12" cy="13" r="8" />
+                        <path d="M12 9v4l2.5 2M9 2h6" />
+                      </svg>
+                      {{ (remainingMs() / 1000).toFixed(0) }} s
+                    </span>
+                  </div>
+                  <h2>{{ q.text }}</h2>
+                  <div class="timer" aria-hidden="true">
+                    <div
+                      class="timer-fill"
+                      [style.transform]="'scaleX(' + remainingRatio() + ')'"
+                    ></div>
+                  </div>
+                </section>
+              }
+
+              @if (r.phase === 'REVEAL') {
+                <p class="reveal-question">{{ q.text }}</p>
+              }
+
+              <div class="answers" role="group" aria-label="Réponses">
+                @for (choice of q.choices; track $index; let i = $index) {
+                  <button
+                    type="button"
+                    class="answer {{ answerState(i) }}"
+                    [disabled]="r.phase !== 'QUESTION' || myChoice() !== null"
+                    (click)="choose(i)"
+                  >
+                    <span class="letter">{{ letters[i] }}</span>
+                    <span class="answer-text">{{ choice }}</span>
+                    @if (r.phase === 'REVEAL' && !r.solo && countFor(i) > 0) {
+                      <span class="count" [attr.aria-label]="countFor(i) + ' réponses'">{{
+                        countFor(i)
+                      }}</span>
+                    }
+                    @switch (answerState(i)) {
+                      @case ('picked') {
+                        <svg
+                          class="mark"
+                          width="22"
+                          height="22"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="3"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path d="M5 12.5l4.5 4.5L19 7.5" />
+                        </svg>
+                      }
+                      @case ('correct') {
+                        <svg
+                          class="mark"
+                          width="22"
+                          height="22"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="3"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          aria-label="Bonne réponse"
+                        >
+                          <path d="M5 12.5l4.5 4.5L19 7.5" />
+                        </svg>
+                      }
+                      @case ('wrong') {
+                        <svg
+                          class="mark"
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="3"
+                          stroke-linecap="round"
+                          aria-label="Ta réponse"
+                        >
+                          <path d="M6 6l12 12M18 6L6 18" />
+                        </svg>
+                      }
+                    }
+                  </button>
+                }
+              </div>
+
+              @if (r.phase === 'QUESTION' && !r.solo) {
+                <div class="answered-row">
+                  <div class="avatars">
+                    @for (p of answered().slice(0, 4); track p.id) {
+                      <span class="avatar small" [style.background]="avatarColor(p.name)">{{
+                        initial(p.name)
+                      }}</span>
+                    }
+                  </div>
+                  <span class="muted small">{{ answeredLabel() }}</span>
+                </div>
+              }
+
+              @if (r.phase === 'REVEAL' && r.reveal; as reveal) {
+                <section class="card fact pop-in">
+                  <span class="fact-tag">Le savais-tu&#160;?</span>
+                  <p>{{ reveal.explanation }}</p>
+                </section>
+
+                @if (!r.solo) {
+                  <section class="card ranking-card">
+                    <ol class="ranking">
+                      @for (p of ranking().slice(0, 5); track p.id) {
+                        <li [class.me]="p.id === me()?.id">
+                          <span class="rank">{{ p.rank }}</span>
+                          <span class="player-name">{{ p.id === me()?.id ? 'Toi' : p.name }}</span>
+                          @if (p.move > 0) {
+                            <span class="move up">▲ {{ p.move }}</span>
+                          } @else if (p.move < 0) {
+                            <span class="move down">▼ {{ -p.move }}</span>
+                          }
+                          <span class="pts">{{ points(p.score) }}</span>
+                        </li>
+                      }
+                    </ol>
+                    @if ((myRank()?.rank ?? 0) > 5) {
+                      <p class="muted small">Tu es {{ myRank()?.rank }}e.</p>
+                    }
+                  </section>
+                }
+
+                <div class="sticky-actions">
+                  @if (isHost()) {
+                    <button class="btn dark block" type="button" (click)="next()">
+                      {{
+                        r.questionIndex + 1 < r.questionCount
+                          ? 'Question suivante →'
+                          : 'Voir les résultats'
+                      }}
+                    </button>
+                  } @else {
+                    <p class="waiting">La suite arrive…</p>
+                  }
+                  @if (!r.solo) {
+                    @for (k of [r.questionIndex]; track k) {
+                      <div
+                        class="auto-advance"
+                        [style.animation-duration.s]="autoAdvanceSeconds"
+                      ></div>
+                    }
+                  }
+                </div>
+              }
+            }
+          } @else {
+            <!-- ───────────── Results ───────────── -->
+            <svg
+              class="deco confetti"
+              width="390"
+              height="320"
+              viewBox="0 0 390 320"
+              aria-hidden="true"
+            >
+              <rect
+                x="30"
+                y="60"
+                width="12"
+                height="22"
+                rx="3"
+                fill="var(--yellow)"
+                transform="rotate(-20 36 71)"
+              />
+              <circle cx="350" cy="50" r="8" fill="var(--mint)" />
+              <path d="M320 140l9 16h-18z" fill="var(--pink)" />
+              <rect
+                x="60"
+                y="190"
+                width="12"
+                height="20"
+                rx="3"
+                fill="var(--mint)"
+                transform="rotate(26 66 200)"
+              />
+              <rect
+                x="360"
+                y="260"
+                width="12"
+                height="22"
+                rx="3"
+                fill="var(--yellow)"
+                transform="rotate(-30 366 271)"
+              />
+              <path d="M90 22l5 10 11 1-8 7 2 11-10-6-10 6 2-11-8-7 11-1z" fill="#fff" />
+            </svg>
+
+            <section class="results pop-in">
+              <span class="sticker yellow-sticker">Partie terminée</span>
+              @if (r.solo) {
+                <h2>{{ points(me()?.score ?? 0) }} points</h2>
+                <p>
+                  {{ me()?.correctCount }} bonne{{
+                    (me()?.correctCount ?? 0) > 1 ? 's' : ''
+                  }}
+                  réponse{{ (me()?.correctCount ?? 0) > 1 ? 's' : '' }} sur {{ r.questionCount }}
+                </p>
+              } @else {
+                <h2>
+                  @if (myRank()?.rank === 1) {
+                    Tu gagnes&#160;!
+                  } @else {
+                    {{ winner()?.name }} gagne&#160;!
+                  }
+                </h2>
+                <p>
+                  Tu finis {{ myRank()?.rank === 1 ? '1er' : myRank()?.rank + 'e' }} avec
+                  {{ me()?.correctCount }} bonne{{
+                    (me()?.correctCount ?? 0) > 1 ? 's' : ''
+                  }}
+                  réponse{{ (me()?.correctCount ?? 0) > 1 ? 's' : '' }} sur {{ r.questionCount }}
                 </p>
               }
             </section>
 
-            <div class="answers" role="group" aria-label="Réponses">
-              @for (choice of q.choices; track $index; let i = $index) {
-                <button
-                  type="button"
-                  class="answer a{{ i }}"
-                  [class.picked]="myChoice() === i"
-                  [class.dim]="
-                    (r.phase === 'QUESTION' && myChoice() !== null && myChoice() !== i) ||
-                    (r.phase === 'REVEAL' && r.reveal?.correctIndex !== i)
-                  "
-                  [class.correct]="r.phase === 'REVEAL' && r.reveal?.correctIndex === i"
-                  [disabled]="r.phase !== 'QUESTION' || myChoice() !== null"
-                  (click)="choose(i)"
-                >
-                  <span class="shape" aria-hidden="true">{{ shapes[i] }}</span>
-                  <span class="answer-text">{{ choice }}</span>
-                  @if (r.phase === 'REVEAL') {
-                    @if (!r.solo) {
-                      <span class="count">{{ countFor(i) }}</span>
-                    }
-                    @if (r.reveal?.correctIndex === i) {
-                      <span class="mark" aria-label="Bonne réponse">✓</span>
-                    } @else if (myChoice() === i) {
-                      <span class="mark" aria-label="Ta réponse">✗</span>
-                    }
-                  }
-                </button>
-              }
-            </div>
-
-            @if (r.phase === 'QUESTION' && myChoice() !== null) {
-              <p class="center muted">Réponse enregistrée, attends les autres…</p>
-            }
-
-            @if (r.phase === 'REVEAL' && r.reveal; as reveal) {
-              <section
-                class="card verdict"
-                [class.good]="me()?.lastCorrect"
-                [class.bad]="!me()?.lastCorrect"
-              >
-                <strong class="verdict-title">
-                  @if (me()?.lastCorrect) {
-                    Bonne réponse ! +{{ me()?.lastPoints }}
-                  } @else if (me()?.lastCorrect === false) {
-                    Raté !
-                  } @else {
-                    Temps écoulé !
-                  }
-                </strong>
-                <p>{{ reveal.explanation }}</p>
-              </section>
-
-              @if (!r.solo) {
-                <section class="card">
-                  <h3 class="section-title">Classement</h3>
-                  <ol class="ranking">
-                    @for (p of ranking().slice(0, 5); track p.id; let i = $index) {
-                      <li [class.me]="p.id === me()?.id">
-                        <span class="rank">{{ i + 1 }}</span>
-                        <span class="player-name">{{ p.name }}</span>
-                        @if (p.lastPoints) {
-                          <span class="gain">+{{ p.lastPoints }}</span>
-                        }
-                        <span class="pts">{{ p.score }}</span>
-                      </li>
-                    }
-                  </ol>
-                  @if (myRank() > 5) {
-                    <p class="muted small">Tu es {{ myRank() }}e.</p>
-                  }
-                </section>
-              }
-
-              <div class="sticky-actions">
-                @if (isHost()) {
-                  <button class="btn primary block" type="button" (click)="next()">
-                    {{
-                      r.questionIndex + 1 < r.questionCount
-                        ? 'Question suivante'
-                        : 'Voir les résultats'
-                    }}
-                  </button>
-                }
-                @if (!r.solo) {
-                  @for (k of [r.questionIndex]; track k) {
-                    <div
-                      class="auto-advance"
-                      [style.animation-duration.s]="autoAdvanceSeconds"
-                    ></div>
-                  }
-                }
-              </div>
-            }
-          }
-
-          <!-- ───────────── Results ───────────── -->
-        } @else {
-          <section class="results">
-            <p class="eyebrow">Partie terminée</p>
-            @if (r.solo) {
-              <h2>{{ me()?.score }} points</h2>
-              <p class="muted">{{ me()?.correctCount }}/{{ r.questionCount }} bonnes réponses</p>
-            } @else {
-              <h2>
-                @if (myRank() === 1) {
-                  Victoire !
-                } @else {
-                  Tu termines {{ myRank() }}e
-                }
-              </h2>
+            @if (!r.solo) {
               <div class="podium">
-                @for (p of ranking().slice(0, 3); track p.id; let i = $index) {
-                  <div class="step step-{{ i + 1 }}">
-                    <span class="avatar">{{ initials(p.name) }}</span>
-                    <span class="player-name">{{ p.name }}</span>
-                    <span class="pts">{{ p.score }} · {{ p.correctCount }}✓</span>
-                    <div class="block">{{ i + 1 }}</div>
+                @for (p of podium(); track p.id) {
+                  <div class="step step-{{ p.rank }}">
+                    @if (p.rank === 1) {
+                      <svg width="34" height="24" viewBox="0 0 34 24" aria-hidden="true">
+                        <path
+                          d="M2 22L4 4l8 8 5-10 5 10 8-8 2 18z"
+                          fill="var(--yellow)"
+                          stroke="var(--deep)"
+                          stroke-width="2"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    }
+                    <span class="avatar big" [style.background]="avatarColor(p.name)">{{
+                      initial(p.name)
+                    }}</span>
+                    <span class="player-name">{{ p.id === me()?.id ? 'Toi' : p.name }}</span>
+                    <div class="podium-block">
+                      <span class="block-rank">{{ p.rank }}</span>
+                      <span class="block-pts">{{ points(p.score) }}</span>
+                    </div>
                   </div>
                 }
               </div>
             }
-          </section>
 
-          @if (!r.solo && r.players.length > 3) {
-            <section class="card">
-              <ol class="ranking">
-                @for (p of ranking(); track p.id; let i = $index) {
-                  <li [class.me]="p.id === me()?.id">
-                    <span class="rank">{{ i + 1 }}</span>
-                    <span class="player-name">{{ p.name }}</span>
-                    <span class="pts">{{ p.score }}</span>
-                  </li>
-                }
-              </ol>
+            <section class="stats">
+              <div>
+                <strong>{{ me()?.correctCount }}/{{ r.questionCount }}</strong
+                ><span>bonnes réponses</span>
+              </div>
+              <div>
+                <strong>{{ me()?.bestStreak }}</strong
+                ><span>meilleure série</span>
+              </div>
+              <div>
+                <strong>{{ points(me()?.score ?? 0) }}</strong
+                ><span>points</span>
+              </div>
             </section>
-          }
 
-          <div class="sticky-actions stack">
-            @if (isHost()) {
-              <button class="btn primary block" type="button" (click)="restart()">Rejouer</button>
-            } @else {
-              <p class="center muted">L'hôte peut relancer une partie.</p>
+            @if (!r.solo && ranking().length > 3) {
+              <section class="card">
+                <ol class="ranking">
+                  @for (p of ranking(); track p.id) {
+                    <li [class.me]="p.id === me()?.id">
+                      <span class="rank">{{ p.rank }}</span>
+                      <span class="player-name">{{ p.id === me()?.id ? 'Toi' : p.name }}</span>
+                      <span class="pts">{{ points(p.score) }}</span>
+                    </li>
+                  }
+                </ol>
+              </section>
             }
-            <button class="btn block" type="button" (click)="leave()">Retour à l'accueil</button>
-          </div>
+
+            <div class="end-actions">
+              @if (isHost()) {
+                <button class="btn yellow block" type="button" (click)="restart()">
+                  Revanche&#160;!
+                </button>
+              } @else {
+                <p class="waiting">L'hôte peut lancer une revanche.</p>
+              }
+              <button class="btn outline block" type="button" (click)="leave()">
+                Retour à l'accueil
+              </button>
+            </div>
+          }
+        } @else {
+          <p class="center muted">Connexion…</p>
         }
-      } @else {
-        <p class="center muted">Connexion…</p>
       }
     }
-  }
-</main>
+  </main>
+</div>

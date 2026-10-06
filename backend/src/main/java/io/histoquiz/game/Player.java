@@ -8,6 +8,8 @@ class Player {
 	final String name;
 	int score;
 	int correctCount;
+	int streak;
+	int bestStreak;
 	boolean connected = true;
 	Integer lastPoints;
 	Boolean lastCorrect;

@@ -164,6 +164,8 @@ public class Room {
 		players.values().forEach(p -> {
 			p.score = 0;
 			p.correctCount = 0;
+			p.streak = 0;
+			p.bestStreak = 0;
 			p.resetRound();
 		});
 		index = -1;
@@ -209,6 +211,10 @@ public class Room {
 			p.score += points;
 			if (correct) {
 				p.correctCount++;
+				p.streak++;
+				p.bestStreak = Math.max(p.bestStreak, p.streak);
+			} else {
+				p.streak = 0;
 			}
 		}
 		phase = Phase.REVEAL;
@@ -239,6 +245,8 @@ public class Room {
 		players.values().forEach(p -> {
 			p.score = 0;
 			p.correctCount = 0;
+			p.streak = 0;
+			p.bestStreak = 0;
 			p.resetRound();
 		});
 		questions = List.of();
@@ -272,7 +280,7 @@ public class Room {
 		boolean revealed = phase == Phase.REVEAL;
 		List<RoomView.PlayerView> playerViews = new ArrayList<>();
 		for (Player p : players.values()) {
-			playerViews.add(new RoomView.PlayerView(p.id, p.name, p.score, p.correctCount, p.connected, answers.containsKey(p.id),
+			playerViews.add(new RoomView.PlayerView(p.id, p.name, p.score, p.correctCount, p.streak, p.bestStreak, p.connected, answers.containsKey(p.id),
 					revealed ? p.lastPoints : null, revealed ? p.lastCorrect : null));
 		}
 		RoomView.QuestionView question = null;

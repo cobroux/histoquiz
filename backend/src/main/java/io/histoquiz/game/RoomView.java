@@ -23,7 +23,8 @@ public record RoomView(
 	public record Settings(Set<Period> periods, int questionCount, int secondsPerQuestion) {
 	}
 
-	public record PlayerView(String id, String name, int score, int correctCount, boolean connected, boolean answered,
+	public record PlayerView(String id, String name, int score, int correctCount, int streak, int bestStreak,
+			boolean connected, boolean answered,
 			Integer lastPoints, Boolean lastCorrect) {
 	}
 

@@ -1,44 +1,83 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Nunito:wght@500;600;700;800&display=swap');
 
+/* ── Design tokens ─────────────────────────────────────────────────────────── */
 :root {
-  --bg: #f5efe3;
-  --surface: #fffaf0;
-  --surface-2: #efe6d4;
-  --ink: #1f2430;
-  --ink-soft: #5b6070;
-  --line: #ddd1ba;
-  --accent: #b23a2a;
-  --accent-ink: #ffffff;
-  --good: #2f7d4f;
-  --bad: #b23a2a;
-  --a0: #c0392b;
-  --a1: #2463a8;
-  --a2: #c58a12;
-  --a3: #2f7d4f;
-  --radius: 14px;
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 4px 16px rgb(0 0 0 / 0.06);
-  --font-display: 'Fraunces', Georgia, serif;
-  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --bg: #f4f1ff;
+  --surface: #ffffff;
+  --ink: #1e1b4b;
+  --soft: #4a4675;
+  --muted: #6b6799;
+  --line: #1e1b4b;
+  --shadow: #1e1b4b;
+  --chip: #e8e3ff;
+  --chip-ink: #3f22c9;
+  --track: #dcd6f7;
+  --accent: #5b3bf0;
+  --accent-text: #5b3bf0;
+  --on-accent: #ffffff;
+  --success-bg: #22c58b;
+  --fail-bg: #ff7a8f;
+  --success: #0e7c55;
+  --danger: #c4283c;
+
+  /* Fixed brand colours (same in both themes, always with dark ink on top). */
+  --yellow: #ffc43d;
+  --pink: #ff5c8a;
+  --mint: #22c58b;
+  --deep: #1e1b4b;
+
+  --p-premiere: #ff8a5b;
+  --p-entre: #ffc43d;
+  --p-seconde: #8fa8ff;
+  --p-froide: #22c58b;
+
+  --radius: 22px;
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body: 'Nunito', system-ui, sans-serif;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #15171c;
-    --surface: #1e2129;
-    --surface-2: #272b35;
-    --ink: #f1ece2;
-    --ink-soft: #a6a9b4;
-    --line: #333845;
-    --accent: #e0644f;
-    --accent-ink: #15171c;
-    --good: #4cb37a;
-    --bad: #e0644f;
-    --shadow: 0 1px 2px rgb(0 0 0 / 0.4);
+  :root:not([data-theme='light']) {
+    --bg: #15132b;
+    --surface: #24204a;
+    --ink: #f4f1ff;
+    --soft: #c9c4f0;
+    --muted: #9b96cc;
+    --line: #4a4490;
+    --shadow: #07061a;
+    --chip: #332e66;
+    --chip-ink: #c9bdff;
+    --track: #332e66;
+    --accent-text: #a894ff;
+    --success-bg: #0f2b24;
+    --fail-bg: #3a1424;
+    --success: #5be3a9;
+    --danger: #ff8fa3;
     color-scheme: dark;
   }
 }
 
+:root[data-theme='dark'] {
+  --bg: #15132b;
+  --surface: #24204a;
+  --ink: #f4f1ff;
+  --soft: #c9c4f0;
+  --muted: #9b96cc;
+  --line: #4a4490;
+  --shadow: #07061a;
+  --chip: #332e66;
+  --chip-ink: #c9bdff;
+  --track: #332e66;
+  --accent-text: #a894ff;
+  --success-bg: #0f2b24;
+  --fail-bg: #3a1424;
+  --success: #5be3a9;
+  --danger: #ff8fa3;
+  color-scheme: dark;
+}
+
+/* ── Base ──────────────────────────────────────────────────────────────────── */
 * {
   box-sizing: border-box;
 }
@@ -51,20 +90,23 @@ body {
 }
 
 body {
-  background: var(--bg);
   color: var(--ink);
   font-family: var(--font-body);
   font-size: 16px;
+  font-weight: 600;
   line-height: 1.45;
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease;
 }
 
 h1,
 h2,
 h3 {
   font-family: var(--font-display);
-  line-height: 1.15;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
   margin: 0;
 }
 
@@ -75,9 +117,14 @@ select {
   color: inherit;
 }
 
+a {
+  color: var(--accent-text);
+}
+
 .page {
+  position: relative;
   width: 100%;
-  max-width: 720px;
+  max-width: 560px;
   margin: 0 auto;
   padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
     max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
@@ -87,12 +134,13 @@ select {
   gap: 16px;
 }
 
+/* ── Building blocks: chunky outlined surfaces with a solid drop shadow ───── */
 .card {
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 2px solid var(--line);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 16px;
+  box-shadow: 0 6px 0 var(--shadow);
+  padding: 18px;
 }
 
 .btn {
@@ -100,21 +148,28 @@ select {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 48px;
-  padding: 0 20px;
-  border-radius: 12px;
-  border: 1px solid var(--line);
+  min-height: 56px;
+  padding: 0 22px;
+  border-radius: 18px;
+  border: 2px solid var(--line);
   background: var(--surface);
-  font-weight: 600;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.1rem;
+  text-decoration: none;
   cursor: pointer;
   touch-action: manipulation;
+  box-shadow: 0 5px 0 var(--shadow);
   transition:
     transform 0.08s ease,
+    box-shadow 0.08s ease,
     opacity 0.15s ease;
 }
 
 .btn:active:not(:disabled) {
-  transform: scale(0.97);
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 var(--shadow);
 }
 
 .btn:disabled {
@@ -124,46 +179,103 @@ select {
 
 .btn.primary {
   background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-ink);
+  color: var(--on-accent);
+}
+
+.btn.yellow {
+  background: var(--yellow);
+  color: var(--deep);
+}
+
+.btn.dark {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.btn.ghost {
+  background: transparent;
+  box-shadow: none;
 }
 
 .btn.block {
   width: 100%;
 }
 
+.icon-btn {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 14px;
+  border: 2px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 3px 0 var(--shadow);
+  cursor: pointer;
+}
+
+.icon-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--shadow);
+}
+
 .input {
   width: 100%;
-  min-height: 48px;
-  padding: 0 14px;
-  border-radius: 12px;
-  border: 1px solid var(--line);
+  min-height: 56px;
+  padding: 0 16px;
+  border-radius: 16px;
+  border: 2px solid var(--line);
   background: var(--surface);
-  font-size: 16px; /* >= 16px avoids the iOS zoom on focus */
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 18px; /* >= 16px avoids the iOS zoom on focus */
+  box-shadow: 0 4px 0 var(--shadow);
+}
+
+.input::placeholder {
+  color: var(--muted);
 }
 
 .input:focus-visible,
-.btn:focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent);
-  outline-offset: 2px;
+.btn:focus-visible,
+.icon-btn:focus-visible,
+button:focus-visible {
+  outline: 3px solid var(--accent-text);
+  outline-offset: 3px;
 }
 
 .label {
   display: block;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--ink-soft);
-  margin-bottom: 6px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  margin-bottom: 8px;
 }
 
 .muted {
-  color: var(--ink-soft);
+  color: var(--muted);
 }
 
 .error {
-  color: var(--bad);
-  font-weight: 500;
   margin: 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--danger) 14%, var(--surface));
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.sticker {
+  display: inline-block;
+  padding: 5px 11px;
+  border-radius: 10px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 0.9rem;
+  background: var(--ink);
+  color: var(--bg);
+  transform: rotate(-3deg);
 }
 
 .chip-row {
@@ -173,18 +285,56 @@ select {
 }
 
 .chip {
-  min-height: 40px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
+  min-width: 52px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 2px solid var(--line);
   background: var(--surface);
+  color: var(--ink);
+  font-weight: 800;
   cursor: pointer;
-  font-weight: 500;
-  font-size: 0.9rem;
+  box-shadow: 0 3px 0 var(--shadow);
 }
 
 .chip[aria-pressed='true'] {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: var(--bg);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.chip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  color: var(--deep);
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+/* Decorative confetti shapes. */
+.deco {
+  position: absolute;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pop-in {
+    animation: pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  @keyframes pop-in {
+    from {
+      transform: scale(0.85);
+      opacity: 0;
+    }
+  }
 }

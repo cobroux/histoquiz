@@ -80,6 +80,21 @@ class RoomTest {
 	}
 
 	@Test
+	void tracksStreaks() {
+		room.start(QUESTIONS, 0);
+		room.answer(alice.playerId(), 0, 2, 0);
+		room.answer(bob.playerId(), 0, 1, 0);
+		room.reveal(0);
+		room.advance(0);
+		room.answer(alice.playerId(), 1, 0, 0);
+		room.reveal(0);
+
+		RoomView view = room.view(0);
+		assertThat(view.players()).extracting(RoomView.PlayerView::streak).containsExactly(2, 0);
+		assertThat(view.players()).extracting(RoomView.PlayerView::bestStreak).containsExactly(2, 0);
+	}
+
+	@Test
 	void disconnectedPlayersDoNotBlockTheRound() {
 		room.start(QUESTIONS, 0);
 		room.setConnected(bob.playerId(), false, 0);
