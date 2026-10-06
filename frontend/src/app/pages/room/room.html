@@ -1,0 +1,285 @@
+<main class="page">
+  @switch (status()) {
+    @case ('loading') {
+      <p class="center muted">Chargement du salon…</p>
+    }
+
+    @case ('error') {
+      <div class="card center-card">
+        <h2>Oups</h2>
+        <p class="muted">{{ error() }}</p>
+        <a class="btn primary block" routerLink="/">Retour à l'accueil</a>
+      </div>
+    }
+
+    @case ('join') {
+      <form class="card center-card" (ngSubmit)="join()">
+        <p class="eyebrow">Salon {{ code().toUpperCase() }}</p>
+        <h2>Rejoindre la partie</h2>
+        <label class="label" for="name">Ton pseudo</label>
+        <input
+          id="name"
+          class="input"
+          name="name"
+          maxlength="20"
+          autocomplete="nickname"
+          [ngModel]="name()"
+          (ngModelChange)="name.set($event)"
+        />
+        @if (error(); as message) {
+          <p class="error" role="alert">{{ message }}</p>
+        }
+        <button class="btn primary block" type="submit" [disabled]="busy() || !name().trim()">
+          Rejoindre
+        </button>
+        <a class="btn block" routerLink="/">Annuler</a>
+      </form>
+    }
+
+    @case ('playing') {
+      @if (room(); as r) {
+        <header class="topbar">
+          <button class="icon-btn" type="button" (click)="leave()" aria-label="Quitter la partie">
+            ✕
+          </button>
+          <div class="topbar-title">
+            @if (r.phase === 'QUESTION' || r.phase === 'REVEAL') {
+              Question {{ r.questionIndex + 1 }}/{{ r.questionCount }}
+            } @else if (r.solo) {
+              Partie solo
+            } @else {
+              Salon {{ r.code }}
+            }
+          </div>
+          @if (me(); as m) {
+            <div class="score-pill" aria-label="Ton score">{{ m.score }} pts</div>
+          }
+        </header>
+
+        @if (!online()) {
+          <p class="banner" role="status">Connexion perdue, reconnexion…</p>
+        }
+
+        <!-- ───────────── Lobby ───────────── -->
+        @if (r.phase === 'LOBBY') {
+          @if (r.solo) {
+            <p class="center muted">La partie démarre…</p>
+          } @else {
+            <section class="card share">
+              <span class="label">Code du salon</span>
+              <div class="big-code">{{ r.code }}</div>
+              <button class="btn block" type="button" (click)="share()">
+                {{ shareFeedback() ?? 'Partager le lien' }}
+              </button>
+            </section>
+
+            <section class="card">
+              <h3 class="section-title">Joueurs ({{ r.players.length }})</h3>
+              <ul class="players">
+                @for (p of r.players; track p.id) {
+                  <li [class.offline]="!p.connected">
+                    <span class="avatar">{{ initials(p.name) }}</span>
+                    <span class="player-name">{{ p.name }}</span>
+                    @if (p.id === r.hostId) {
+                      <span class="tag">Hôte</span>
+                    }
+                    @if (p.id === me()?.id) {
+                      <span class="tag soft">Toi</span>
+                    }
+                  </li>
+                }
+              </ul>
+            </section>
+
+            <p class="muted small center">
+              {{ r.settings.questionCount }} questions · {{ r.settings.secondsPerQuestion }} s par
+              question
+            </p>
+
+            <div class="sticky-actions">
+              @if (isHost()) {
+                <button class="btn primary block" type="button" (click)="start()">
+                  Lancer la partie
+                </button>
+              } @else {
+                <p class="center muted">En attente du lancement par l'hôte…</p>
+              }
+            </div>
+          }
+
+          <!-- ───────────── Question & reveal ───────────── -->
+        } @else if (r.phase === 'QUESTION' || r.phase === 'REVEAL') {
+          @if (r.question; as q) {
+            <div class="timer" [class.hidden]="r.phase !== 'QUESTION'" aria-hidden="true">
+              <div
+                class="timer-fill"
+                [class.low]="remainingMs() < 5000"
+                [style.transform]="'scaleX(' + remainingRatio() + ')'"
+              ></div>
+            </div>
+
+            <section class="question">
+              <p class="eyebrow">{{ q.periodLabel }}</p>
+              <h2>{{ q.text }}</h2>
+              @if (r.phase === 'QUESTION') {
+                <p class="muted small">
+                  {{ (remainingMs() / 1000).toFixed(0) }} s
+                  @if (!r.solo) {
+                    · {{ answeredCount() }}/{{ connectedCount() }} ont répondu
+                  }
+                </p>
+              }
+            </section>
+
+            <div class="answers" role="group" aria-label="Réponses">
+              @for (choice of q.choices; track $index; let i = $index) {
+                <button
+                  type="button"
+                  class="answer a{{ i }}"
+                  [class.picked]="myChoice() === i"
+                  [class.dim]="
+                    (r.phase === 'QUESTION' && myChoice() !== null && myChoice() !== i) ||
+                    (r.phase === 'REVEAL' && r.reveal?.correctIndex !== i)
+                  "
+                  [class.correct]="r.phase === 'REVEAL' && r.reveal?.correctIndex === i"
+                  [disabled]="r.phase !== 'QUESTION' || myChoice() !== null"
+                  (click)="choose(i)"
+                >
+                  <span class="shape" aria-hidden="true">{{ shapes[i] }}</span>
+                  <span class="answer-text">{{ choice }}</span>
+                  @if (r.phase === 'REVEAL') {
+                    @if (!r.solo) {
+                      <span class="count">{{ countFor(i) }}</span>
+                    }
+                    @if (r.reveal?.correctIndex === i) {
+                      <span class="mark" aria-label="Bonne réponse">✓</span>
+                    } @else if (myChoice() === i) {
+                      <span class="mark" aria-label="Ta réponse">✗</span>
+                    }
+                  }
+                </button>
+              }
+            </div>
+
+            @if (r.phase === 'QUESTION' && myChoice() !== null) {
+              <p class="center muted">Réponse enregistrée, attends les autres…</p>
+            }
+
+            @if (r.phase === 'REVEAL' && r.reveal; as reveal) {
+              <section
+                class="card verdict"
+                [class.good]="me()?.lastCorrect"
+                [class.bad]="!me()?.lastCorrect"
+              >
+                <strong class="verdict-title">
+                  @if (me()?.lastCorrect) {
+                    Bonne réponse ! +{{ me()?.lastPoints }}
+                  } @else if (me()?.lastCorrect === false) {
+                    Raté !
+                  } @else {
+                    Temps écoulé !
+                  }
+                </strong>
+                <p>{{ reveal.explanation }}</p>
+              </section>
+
+              @if (!r.solo) {
+                <section class="card">
+                  <h3 class="section-title">Classement</h3>
+                  <ol class="ranking">
+                    @for (p of ranking().slice(0, 5); track p.id; let i = $index) {
+                      <li [class.me]="p.id === me()?.id">
+                        <span class="rank">{{ i + 1 }}</span>
+                        <span class="player-name">{{ p.name }}</span>
+                        @if (p.lastPoints) {
+                          <span class="gain">+{{ p.lastPoints }}</span>
+                        }
+                        <span class="pts">{{ p.score }}</span>
+                      </li>
+                    }
+                  </ol>
+                  @if (myRank() > 5) {
+                    <p class="muted small">Tu es {{ myRank() }}e.</p>
+                  }
+                </section>
+              }
+
+              <div class="sticky-actions">
+                @if (isHost()) {
+                  <button class="btn primary block" type="button" (click)="next()">
+                    {{
+                      r.questionIndex + 1 < r.questionCount
+                        ? 'Question suivante'
+                        : 'Voir les résultats'
+                    }}
+                  </button>
+                }
+                @if (!r.solo) {
+                  @for (k of [r.questionIndex]; track k) {
+                    <div
+                      class="auto-advance"
+                      [style.animation-duration.s]="autoAdvanceSeconds"
+                    ></div>
+                  }
+                }
+              </div>
+            }
+          }
+
+          <!-- ───────────── Results ───────────── -->
+        } @else {
+          <section class="results">
+            <p class="eyebrow">Partie terminée</p>
+            @if (r.solo) {
+              <h2>{{ me()?.score }} points</h2>
+              <p class="muted">{{ me()?.correctCount }}/{{ r.questionCount }} bonnes réponses</p>
+            } @else {
+              <h2>
+                @if (myRank() === 1) {
+                  Victoire !
+                } @else {
+                  Tu termines {{ myRank() }}e
+                }
+              </h2>
+              <div class="podium">
+                @for (p of ranking().slice(0, 3); track p.id; let i = $index) {
+                  <div class="step step-{{ i + 1 }}">
+                    <span class="avatar">{{ initials(p.name) }}</span>
+                    <span class="player-name">{{ p.name }}</span>
+                    <span class="pts">{{ p.score }} · {{ p.correctCount }}✓</span>
+                    <div class="block">{{ i + 1 }}</div>
+                  </div>
+                }
+              </div>
+            }
+          </section>
+
+          @if (!r.solo && r.players.length > 3) {
+            <section class="card">
+              <ol class="ranking">
+                @for (p of ranking(); track p.id; let i = $index) {
+                  <li [class.me]="p.id === me()?.id">
+                    <span class="rank">{{ i + 1 }}</span>
+                    <span class="player-name">{{ p.name }}</span>
+                    <span class="pts">{{ p.score }}</span>
+                  </li>
+                }
+              </ol>
+            </section>
+          }
+
+          <div class="sticky-actions stack">
+            @if (isHost()) {
+              <button class="btn primary block" type="button" (click)="restart()">Rejouer</button>
+            } @else {
+              <p class="center muted">L'hôte peut relancer une partie.</p>
+            }
+            <button class="btn block" type="button" (click)="leave()">Retour à l'accueil</button>
+          </div>
+        }
+      } @else {
+        <p class="center muted">Connexion…</p>
+      }
+    }
+  }
+</main>

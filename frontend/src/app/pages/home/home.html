@@ -1,0 +1,123 @@
+<main class="page">
+  <header class="hero">
+    <p class="eyebrow">1914 — 1991</p>
+    <h1>HistoQuiz</h1>
+    <p class="muted">
+      De Sarajevo à la chute de l'URSS : teste tes connaissances seul ou entre amis.
+    </p>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Mode de jeu">
+    <button role="tab" [attr.aria-selected]="mode() === 'solo'" (click)="setMode('solo')">
+      Solo
+    </button>
+    <button role="tab" [attr.aria-selected]="mode() === 'create'" (click)="setMode('create')">
+      Créer un salon
+    </button>
+    <button role="tab" [attr.aria-selected]="mode() === 'join'" (click)="setMode('join')">
+      Rejoindre
+    </button>
+  </div>
+
+  <form class="card form" (ngSubmit)="submit()">
+    <div>
+      <label class="label" for="name">Ton pseudo</label>
+      <input
+        id="name"
+        class="input"
+        name="name"
+        maxlength="20"
+        autocomplete="nickname"
+        placeholder="Ex. Clemenceau"
+        [ngModel]="name()"
+        (ngModelChange)="name.set($event)"
+      />
+    </div>
+
+    @if (mode() === 'join') {
+      <div>
+        <label class="label" for="code">Code du salon</label>
+        <input
+          id="code"
+          class="input code-input"
+          name="code"
+          inputmode="text"
+          autocapitalize="characters"
+          autocomplete="off"
+          placeholder="ABCDE"
+          [ngModel]="code()"
+          (ngModelChange)="onCodeInput($event)"
+        />
+      </div>
+    } @else {
+      <div>
+        <span class="label">Périodes <span class="hint">(aucune = toutes)</span></span>
+        <div class="periods">
+          @for (p of periods(); track p.id) {
+            <button
+              type="button"
+              class="period"
+              [attr.aria-pressed]="selected().has(p.id)"
+              (click)="togglePeriod(p.id)"
+            >
+              <strong>{{ p.label }}</strong>
+              <span>{{ p.years }}</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <span class="label">Questions</span>
+          <div class="chip-row">
+            @for (n of questionCounts; track n) {
+              <button
+                type="button"
+                class="chip"
+                [attr.aria-pressed]="questionCount() === n"
+                [disabled]="n > available()"
+                (click)="questionCount.set(n)"
+              >
+                {{ n }}
+              </button>
+            }
+          </div>
+        </div>
+        <div>
+          <span class="label">Temps par question</span>
+          <div class="chip-row">
+            @for (s of durations; track s) {
+              <button
+                type="button"
+                class="chip"
+                [attr.aria-pressed]="seconds() === s"
+                (click)="seconds.set(s)"
+              >
+                {{ s }} s
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (error(); as message) {
+      <p class="error" role="alert">{{ message }}</p>
+    }
+
+    <button class="btn primary block" type="submit" [disabled]="!canSubmit()">
+      @switch (mode()) {
+        @case ('solo') {
+          Lancer la partie
+        }
+        @case ('create') {
+          Créer le salon
+        }
+        @case ('join') {
+          Rejoindre
+        }
+      }
+    </button>
+  </form>
+</main>

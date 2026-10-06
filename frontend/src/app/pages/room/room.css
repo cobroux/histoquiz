@@ -1,0 +1,403 @@
+.center {
+  text-align: center;
+}
+
+.small {
+  font-size: 0.85rem;
+}
+
+.center-card {
+  margin: auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: center;
+}
+
+.center-card .label {
+  text-align: left;
+  margin-bottom: -6px;
+}
+
+.eyebrow {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  color: var(--accent);
+}
+
+/* ── top bar ── */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar-title {
+  flex: 1;
+  font-weight: 700;
+}
+
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.score-pill {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--bg);
+  font-weight: 700;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.banner {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--a2) 20%, var(--surface));
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* ── lobby ── */
+.share {
+  text-align: center;
+}
+
+.big-code {
+  font-family: var(--font-display);
+  font-size: clamp(2.6rem, 14vw, 3.6rem);
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  margin: 4px 0 12px;
+}
+
+.section-title {
+  font-size: 1.05rem;
+  margin-bottom: 10px;
+}
+
+.players,
+.ranking {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.players li,
+.ranking li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+}
+
+.players li.offline {
+  opacity: 0.45;
+}
+
+.avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  font-weight: 700;
+}
+
+.player-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.tag.soft {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.sticky-actions {
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  padding: 12px 0 max(4px, env(safe-area-inset-bottom));
+  background: linear-gradient(to bottom, transparent, var(--bg) 30%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── question ── */
+.timer {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.timer.hidden {
+  visibility: hidden;
+}
+
+.timer-fill {
+  height: 100%;
+  background: var(--ink);
+  transform-origin: left;
+  transition:
+    transform 0.2s linear,
+    background 0.3s;
+}
+
+.timer-fill.low {
+  background: var(--bad);
+}
+
+.question h2 {
+  font-size: clamp(1.25rem, 5.4vw, 1.75rem);
+  margin: 6px 0;
+}
+
+.question p {
+  margin: 0;
+}
+
+.answers {
+  display: grid;
+  gap: 10px;
+}
+
+@media (min-width: 560px) {
+  .answers {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.answer {
+  --c: var(--a0);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--c);
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--c) 70%, #000);
+  transition:
+    opacity 0.2s,
+    transform 0.08s;
+}
+
+.answer:disabled {
+  cursor: default;
+}
+
+.answer:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--c) 70%, #000);
+}
+
+.a1 {
+  --c: var(--a1);
+}
+
+.a2 {
+  --c: var(--a2);
+}
+
+.a3 {
+  --c: var(--a3);
+}
+
+.answer.dim {
+  opacity: 0.35;
+}
+
+.answer.picked {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.answer.correct {
+  outline: 3px solid var(--good);
+  outline-offset: 2px;
+}
+
+.shape {
+  flex: none;
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.answer-text {
+  flex: 1;
+}
+
+.count {
+  font-variant-numeric: tabular-nums;
+  background: rgb(0 0 0 / 0.2);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+.mark {
+  font-size: 1.3rem;
+}
+
+.verdict {
+  border-left: 6px solid var(--bad);
+}
+
+.verdict.good {
+  border-left-color: var(--good);
+}
+
+.verdict-title {
+  font-size: 1.1rem;
+}
+
+.verdict p {
+  margin: 6px 0 0;
+}
+
+.rank {
+  width: 24px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.ranking li.me {
+  font-weight: 700;
+}
+
+.gain {
+  color: var(--good);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.pts {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.auto-advance {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--ink-soft);
+  transform-origin: left;
+  animation: shrink linear forwards;
+}
+
+@keyframes shrink {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+/* ── results ── */
+.results {
+  text-align: center;
+}
+
+.results h2 {
+  font-size: clamp(2rem, 9vw, 2.8rem);
+  margin: 6px 0 16px;
+}
+
+.podium {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.step {
+  flex: 0 1 32%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.step .player-name {
+  max-width: 100%;
+  font-size: 0.9rem;
+}
+
+.step .block {
+  width: 100%;
+  display: grid;
+  place-items: center;
+  border-radius: 10px 10px 0 0;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+/* 2nd left, 1st centre, 3rd right */
+.step-1 {
+  order: 2;
+}
+
+.step-1 .block {
+  height: 120px;
+  background: var(--a2);
+}
+
+.step-2 {
+  order: 1;
+}
+
+.step-2 .block {
+  height: 88px;
+  background: var(--a1);
+}
+
+.step-3 {
+  order: 3;
+}
+
+.step-3 .block {
+  height: 64px;
+  background: var(--a0);
+}
